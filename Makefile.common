@@ -1,0 +1,6 @@
+WARNS         =	4
+
+CPPFLAGS     +=	-DDIRECT_THREADED_CODE=1
+CPPFLAGS     +=	-DIP_DSP_REGISTERS=1
+
+COPTS        ?=	-O2 -g # my gcc generates faster code with -O2 than with -O3 :-O

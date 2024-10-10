@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+sub fib {
+    my ($n) = @_;
+    
+    return 0 if $n == 0;
+    return 1 if $n == 1;
+
+    # Recursive case
+    return fib($n - 1) + fib($n - 2);
+}
+
+# Example usage
+for my $i (0..1000) {
+    printf "%d\n", fib(28);
+}

@@ -1,0 +1,16 @@
+#!/usr/bin/env lua
+
+function fib(n)
+   if n == 0 then
+      return 0
+   elseif n == 1 then
+      return 1
+   else
+      return fib(n - 1) + fib(n - 2)
+   end
+end
+
+-- Example usage
+for i = 1, 1000 do
+   print(fib(28))
+end

@@ -1,0 +1,15 @@
+digraph tree {
+    rankdir=TB;
+    size="2,5"
+
+    node [shape = circle];
+    s1   [ label="*" ];
+    s11  [ label="+" ];
+    s12  [ label="Y" ];
+    s111 [ label="X" ];
+    s112 [ label="2" ];
+    s1  -> s11;
+    s1  -> s12;
+    s11 -> s111;
+    s11 -> s112;
+}

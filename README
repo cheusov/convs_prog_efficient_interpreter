@@ -1,0 +1,51 @@
+GOAL:
+
+    The goal of this project is to build very efficient threaded code
+    for interpreter and compare its performance with real-life
+    programming languages. This is NOT a production-ready tool but a
+    source code for learning.
+
+CONTENT:
+
+    * How To Write Efficient Interpreter presentation
+    * High-performance source code for stack-based and register-based
+      virtual machines that implement a recursive Fibonacci numbers
+      formula
+    * Scripts for calculating a recursive Fibonacci numbers formula
+
+BUILD PREREQUISITES:
+
+    C compiler and UNIX/POSIX environment
+    mk-configure build system
+
+RUN PREREQUISITES:
+
+    scripts_fib/lua_fib: Lua interpreter
+    scripts_fib/awk_fib: AWK interpreter
+    scripts_fib/perl_fib: perl5
+    scripts_fib/slang_fib: S-Lang interpreter
+    scripts_fib/python_fib: Python 3
+
+BUILD:
+
+    $ # See DIRECT_THREADED_CODE and IP_DSP_REGISTERS define, valid values are 0 and 1
+    $ less Makefile.common
+    $ mkcmake c_fib my_fib
+    $ mkcmake presentation
+
+PLAY:
+
+    $ ./my_fib/my_fib -h
+    $ ./my_fib/my_fib -c1 -n4
+    $ ./my_fib/my_fib -c1 -n5
+    $ ./my_fib/my_fib -c1 -n28
+    $ time -p ./c_fib/c_fib >/dev/null
+    $ time -p ./my_fib/my_fib -r1 >/dev/null
+    $ time -p ./my_fib/my_fib -r2 >/dev/null
+    $ time -p ./my_fib/my_fib -r3 >/dev/null
+    $ time -p ./scripts_fib/lua_fib >/dev/null
+
+THINK:
+
+    $ less c_fib/c_fib.c
+    $ less my_fib/my_fib.c

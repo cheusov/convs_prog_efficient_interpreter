@@ -1,0 +1,14 @@
+#!/usr/bin/awk -f
+
+function fib(n) {
+	if (n <= 1)
+		return n
+	else
+		return fib(n - 1) + fib(n - 2)
+}
+
+BEGIN {
+	for (i = 0; i < 1000; ++i) {
+		print fib(28)
+	}
+}

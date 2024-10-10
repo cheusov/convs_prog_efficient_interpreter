@@ -1,0 +1,756 @@
+%%%begin-myprojects
+\documentclass[hyperref={colorlinks=true},xcolor=table]{beamer}
+
+\usepackage{fancyvrb,relsize}
+\usepackage{graphicx}
+
+\usetheme{Malmoe}
+%\usetheme{Berlin}
+%\usetheme{Warsaw} % Boadilla 
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{page number in head/foot}[totalframenumber]
+
+%\usetheme{Boadilla}
+%\usetheme{CambridgeUS}
+%\usetheme{Malmoe}
+%\usetheme{Singapore}
+%\usetheme{boxes}
+
+%\usecolortheme{crane}
+%\usecolortheme{dove}
+\usepackage[linesnumbered,ruled]{algorithm2e}
+\usepackage{algpseudocode}
+\usecolortheme{seagull} % very cool with \usetheme{default}
+%\usecolortheme{lily} % very cool with \usetheme{default}
+%\usefonttheme{professionalfonts}
+%\useinnertheme{rectangles}
+
+\mode<presentation>
+\title{How to write efficient interpreter}
+\author{Aleksey Cheusov 
+  \\  \texttt{vle@gmx.net}\\
+  t.me/convs\_prog\\
+}
+\date{Minsk/Belarus, Kutaisi/Georgia\\
+  October 2024\\
+}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newenvironment{Code}[1]%
+              {\Verbatim[label=\bf{#1},frame=single,%
+                  fontsize=\small,%
+                  commandchars=\\\{\}]}%
+              {\endVerbatim}
+
+%\newenvironment{Code}[1]%
+%               {\semiverbatim[]}%
+%               {\endsemiverbatim}
+
+\newenvironment{CodeNoLabel}%
+               {\Verbatim[frame=single,%
+                   fontsize=\small,%
+                   commandchars=\\\{\}]}%
+               {\endVerbatim}
+\newenvironment{CodeNoLabelTiny}%
+               {\Verbatim[frame=single,%
+                   fontsize=\tiny,%
+                   commandchars=\\\{\}]}%
+               {\endVerbatim}
+\newenvironment{CodeNoLabelSmallest}%
+               {\Verbatim[frame=single,%
+                   fontsize=\footnotesize,%
+                   commandchars=\\\{\}]}%
+               {\endVerbatim}
+\newenvironment{CodeLarge}%
+               {\Verbatim[frame=single,%
+                   fontsize=\large,%
+                   commandchars=\\\{\}]}%
+               {\endVerbatim}
+
+%\newcommand{\prompt}[1]{\textcolor{blue}{#1}}
+%\newcommand{\prompt}[1]{\textbf{#1}\textnormal{}}
+\newcommand{\prompt}[1]{{\bf{#1}}}
+%\newcommand{\h}[1]{\textbf{#1}}
+%\newcommand{\h}[1]{\bf{#1}\textnormal{}}
+\newcommand{\h}[1]{{\bf{#1}}}
+\newcommand{\URL}[1]{\textbf{#1}}
+\newcommand{\AutohellFile}[1]{\textcolor{red}{#1}}
+\newcommand{\MKCfile}[1]{\textcolor{green}{#1}}
+\newcommand{\ModuleName}[1]{\textbf{#1}\textnormal{}}
+\newcommand{\ProgName}[1]{\textbf{#1}\textnormal{}}
+\newcommand{\ProjectName}[1]{\textbf{#1}\textnormal{}}
+\newcommand{\PackageName}[1]{\textbf{#1}\textnormal{}}
+\newcommand{\MKC}[1]{\large\textsf{#1}\textnormal{}\normalsize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+  \titlepage
+  https://github.com/cheusov/convs\_prog\_efficient\_interpreter
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+  \frametitle{Plan}
+  \begin{itemize}
+  \item Virtual machines (VM)
+  \item Prefix/postfix/infix notations
+  \item Fibonacci program on stack-based and register-based VMs
+  \item Code of stack-based and register-based VMs
+  \item Optimization techniques and benchmarks:
+    \begin{itemize}
+    \item Memory allocation for data and return stacks
+    \item Make VM commands larger and more functional
+    \item Direct threaded code
+    \item Pass instruction pointer and data stack pointer through CPU
+      registers
+    \end{itemize}
+  \item Conclusion
+  \end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+  \frametitle{Virtual machine (VM)}
+  VM state:
+  \begin{itemize}
+  \item Processes
+  \item Threads
+  \item Global variables
+  \item Data stack
+  \item Return stack
+  \item Open files and sockets
+  \item Heap and garbage collector
+  \item Standard library
+  \item Runtime for coroutines
+  \item and many other things...
+  \end{itemize}
+  VM commands interact with it and change its state.
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\scriptsize
+\begin{frame}
+  \frametitle{Postfix notation (Reverse Polish Notation)}
+  \begin{figure}
+    \includegraphics[height=0.3\textheight]{expression_tree.eps}
+    \caption{Expression tree}
+  \end{figure}
+  Postfix notation for above expression: X 2 + Y *
+  \begin{algorithm}[H]
+    \SetAlgoNlRelativeSize{0}
+    \SetNlSty{textbf}{}{}
+    \KwData{$node$: tree node with left and right childs}
+    \SetKwFunction{RPN}{RPN}
+    \SetKwProg{Fn}{Function}{:}{}
+    \Fn{\RPN{$node$}}{
+      \If{$node$ is not nil}{
+        \RPN{$node.left$}\;
+        \RPN{$node.right$}\;
+        print $node.value$\;
+      }
+    }
+    \caption{Generation of Postfix Notation}
+  \end{algorithm}
+  Note: Postfix notation can be used for calculation with the help of stack!
+\end{frame}
+\normalsize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\scriptsize
+\begin{frame}
+  \frametitle{Prefix notation (Lisp-like S-expression)}
+  \begin{figure}
+    \includegraphics[height=0.3\textheight]{expression_tree.eps}
+  \end{figure}
+  Prefix notation for above expression: (* (+ X 2) Y)
+  \begin{algorithm}[H]
+    \SetAlgoNlRelativeSize{0}
+    \SetNlSty{textbf}{}{}
+    \KwData{$node$: tree node with left and right childs}
+    \SetKwFunction{SExpr}{SExpr}
+    \SetKwProg{Fn}{Function}{:}{}
+    \Fn{\SExpr{$node$}}{
+      \uIf{$node$ is a leaf node}{
+        print $node.value$\;
+      }\Else{
+        print ``(``\;
+        print $node.value$\;
+        \SExpr{$node.left$}\;
+        \SExpr{$node.right$}\;
+        print ``)``\;
+      }
+    }
+    \caption{Generation of prefix notation}
+  \end{algorithm}
+\end{frame}
+\normalsize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\scriptsize
+\begin{frame}
+  \frametitle{Infix notation}
+  \begin{figure}
+    \includegraphics[height=0.3\textheight]{expression_tree.eps}
+  \end{figure}
+  Infix notation for above expression: ((X + 2) * Y)
+  \begin{algorithm}[H]
+    \SetAlgoNlRelativeSize{0}
+    \SetNlSty{textbf}{}{}
+    \KwData{$node$: tree node with left and right childs}
+    \SetKwFunction{Infix}{Infix}
+    \SetKwProg{Fn}{Function}{:}{}
+    \Fn{\Infix{$node$}}{
+      \uIf{$node$ is a leaf node}{
+        print $node.value$\;
+      }\Else{
+        print ``(``\;
+        \Infix{$node.left$}\;
+        print $node.value$\;
+        \Infix{$node.right$}\;
+        print ``)``\;
+      }
+    }
+    \caption{Generation of infix notation}
+  \end{algorithm}
+\end{frame}
+\normalsize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+  \frametitle{Fibonacci numbers. Recursive algorithm}
+  \begin{algorithm}[H]
+    \SetAlgoNlRelativeSize{0}
+    \SetNlSty{textbf}{}{}
+    \KwData{$n$: $n \in \mathbb{N}_0$}
+    \KwResult{Fibonacci number $Fib(n)$}
+    \SetKwFunction{Fib}{Fib}
+    \SetKwProg{Fn}{Function}{:}{}
+    \Fn{\Fib{$n$}}{
+      \uIf{$n = 0$}{
+        \Return 0\;
+      }
+      \uElseIf{$n = 1$}{
+        \Return 1\;
+      }
+      \uElse{
+        \Return \Fib{$n - 1$} + \Fib{$n - 2$}\;
+      }
+    }
+    \caption{Recursive Fibonacci}
+  \end{algorithm}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+  \frametitle{Program for Stack-based VM}
+  Sequence of commands to execute
+  \begin{table}
+    \scriptsize
+    \begin{tabular}{ r | r | l | l | l }
+      \rowcolor{lightgray} address & commands & data stack before & data stack after \\
+      0 & Push 28 & & 28 \\
+      2 & Call 6 & 28 & Fib(28) \\
+      4 & Print & Fib(28) & \\
+      5 & Exit & \\
+
+      \hline
+
+      6 & Dup & n & n n \\
+      7 & Push 1 & n n & n n 1 \\
+      9 & $\le$ & n n 1 & n n $\le$ 1 \\
+      10 & JumpIf 21 & n n $\le$ 1 & n \\
+      12 & Dec & n & n-1 \\
+      13 & Dup & n-1 & n-1 n-1 \\
+      14 & Dec & n-1 n-1 & n-1 n-2 \\
+      15 & Call 6 & n-1 n-2 & n-1 Fib(n-2) \\
+      17 & Swap & n-1 Fib(n-2) & Fib(n-2) n-1 \\
+      18 & Call 6 & Fib(n-2) n-1 & Fib(n-2) Fib(n-1) \\
+      20 & Add & Fib(n-2) Fib(n-1) & Fib(n-2) + Fib(n-1) \\
+      21 & Ret & \\
+    \end{tabular}
+    \normalsize
+    \caption{Code for stack-based VM that calculates Fib(28)}
+  \end{table}
+  Note: Call and JumpIf commands take two cells!
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+  \frametitle{Interpreter main loop}
+  \begin{CodeNoLabel}
+typedef void(*command_t)(void);
+
+extern uintptr_t commands[];
+extern uintptr_t* ip;
+
+void interp_run(void) \{
+    ip = commands;
+    while (ip) \{
+        command_t func = (command_t) *ip++;
+        func();
+    \}
+\}
+  \end{CodeNoLabel}
+  \textit{ip} -- instruction pointer\\
+  \textit{commands} -- array with commands to execute\\
+  \textit{uintptr\_t} -- data type for unsigned integer which is large
+  enough to store a pointer
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\footnotesize
+\begin{frame}[fragile]
+  \frametitle{Optimization technique \#0}
+  In order to avoid checking indices when accessing arrays, we
+  allocate memory for data and return stacks like the following.
+
+  Idea is to allocate extra page in the beginning and in the end of
+  main memory and disallow access to them. Thus, stack overflow and
+  underflow will be detected automatically by operating system. On
+  UNIX OSes mmap(2) and mprotect(2) syscalls are used for this.
+
+  \begin{CodeNoLabel}
+void* allocate_pages(size_t pcount) \{
+    char* p = mmap(0, (pcount + 2) * PAGE_SIZE,
+        PROT_READ|PROT_WRITE,
+        MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+    if (p == MAP_FAILED)
+        perror("mmap(2) failed");
+    if (mprotect(p, PAGE_SIZE, PROT_NONE))
+        perror("mprotect(2) failed");
+    if (mprotect(p + (pcount + 1) * PAGE_SIZE,
+        PAGE_SIZE, PROT_NONE))
+        perror("mprotect(2) failed");
+    return p + PAGE_SIZE;
+\}
+  \end{CodeNoLabel}
+\end{frame}
+\normalsize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+  \frametitle{Commands for Stack-based VM}
+  \begin{CodeNoLabel}
+void svm_exit(void) \{
+    ip = NULL;
+\}
+
+void svm_push(void) \{
+    uintptr_t value = *ip++;
+    * ++dsp = value;
+\}
+
+void svm_swap(void) \{
+    uintptr_t top = dsp[0];
+    dsp[0] = dsp[-1];
+    dsp[-1] = top;
+\}
+  \end{CodeNoLabel}
+  \textit{dsp} -- data stack pointer\\
+  data stack grows upword
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+  \frametitle{Commands for Stack-based VM}
+  \begin{CodeNoLabel}
+void svm_call(void) \{
+    uintptr_t* jump_to = (uintptr_t*) *ip++;
+    * ++rsp = (uintptr_t) ip;
+    ip = jump_to;
+\}
+
+void svm_ret(void) \{
+    ip = (uintptr_t*) *rsp--;
+\}
+  \end{CodeNoLabel}
+  \textit{rsp} -- return stack pointer\\
+  return stack also grows upword
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+  \frametitle{Benchmark for Stack-based VM (SVM)}
+  CPU: AMD Ryzen 7 3700X\break\break
+  \begin{table}
+    \begin{tabular}{ | l | c | r | }
+      \hline
+      \rowcolor{lightgray} tool & type & time \\
+      \hline
+      C (gcc-10 -O2) & compiler & 0.67 \\
+      luajit & jit & 3.07 \\
+      pypy & jit & 6.11 \\
+      \hline
+      my\_fib -s1 (Forth-like code) & interp & \textbf{34.67} \\
+      Lua 5.3 & interp & 42.53 \\
+      mawk 1.3.4.20200120 & interp & 55.51 \\
+      S-Lang 2.3.2 & interp & 59.33 \\
+      python 3.9 & interp & 69.30 \\
+      gawk 5.1.0 & interp & 111.52 \\
+      nbawk 9.3 & interp & 119.66 \\
+      Perl 5 & interp & 166.3 \\
+      \hline
+    \end{tabular}
+    \caption{1000 calculations of recursive Fib(28). Time in seconds}
+  \end{table}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+  \frametitle{Optimization technique \#1}
+  Let's replace the sequence of commands with one command. For example,
+  \textbf{DUP, PUSH, ==, JUMP\_IF}
+  with one command
+  \textbf{COMPARE\_TOP\_EQ\_CONST\_AND\_JUMP\_IF}. The more functional
+  commands we use, the less overhead our code has!
+  \begin{table}
+    \begin{tabular}{ | l | r | }
+      \hline
+      \rowcolor{lightgray} tool & time \\
+      \hline
+      C (gcc-10 -O2) & 0.67 \\
+      luajit & 3.07 \\
+      pypy & 6.11 \\
+      Lua 5.3 & 42.53 \\
+      \hline
+      my\_fib -s1   & \textbf{34.67}  \\
+      my\_fib -s2   & \textbf{18.10}  \\
+      my\_fib -s3   & \textbf{17.95}  \\
+      my\_fib -s4   & \textbf{15.83}  \\
+      \hline
+    \end{tabular}
+    \caption{Original Forth-like code (my\_fib -s1)
+      vs. improved one. Time in seconds}
+  \end{table}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\smaller
+\begin{frame}[fragile]
+  \frametitle{Optimization technique \#2. Direct threaded code}
+  Interpreter: let's call the first command in the sequence and then
+  call the next one from inside it with a help of tail call.  This
+  technique replaces a pair call/ret CPU instructions with one
+  unconditional jump which runs faster.
+
+  \textit{This is called Direct Threaded Code which was invented in early 70's.}
+  \begin{CodeNoLabel}
+void svm_drop(void) \{
+    --dsp;
+    // Jump to the next command using tail call!
+    ((command_t)(*ip++))();
+\}
+
+void svm_dup(void) \{
+    uintptr_t value = (uintptr_t) *dsp;
+    * ++dsp = (uintptr_t)value;
+    // Jump to the next command using tail call!
+    ((command_t)(*ip++))();
+\}
+  \end{CodeNoLabel}
+  Note: This technique was stolen from Forth programming language.
+\end{frame}
+\normalsize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+  \frametitle{Optimization technique \#2. Direct threaded code}
+  \begin{CodeNoLabel}
+void interp_run(void) \{
+    ip = commands;
+    command_t func = (command_t) *ip++;
+    func();
+\}
+
+void svm_exit() \{
+\}
+  \end{CodeNoLabel}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+  \frametitle{Optimization technique \#2. Direct threaded code}
+  \begin{CodeNoLabel}
+void svm_call(void) \{
+    uintptr_t* jump_to = (uintptr_t*) *ip++;
+    uintptr_t* old_ip = ip;
+    ip = jump_to;
+    command_t func = (command_t) *ip++;
+    func();
+    ip = old_ip;
+    // Jump to the next command using tail call!
+    ((command_t)(*ip++))();
+\}
+
+void svm_ret(void) \{
+\}
+  \end{CodeNoLabel}
+  As result we don't need a return stack any more!
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+  \frametitle{Optimization technique \#2. Direct threaded code}
+  Benchmark: original approach vs. direct threaded code.
+  \begin{table}
+    \begin{tabular}{ | l | r | r | }
+      \hline
+      \rowcolor{lightgray} tool & original approach & direct threaded code \\
+      \hline
+      C (gcc-10 -O2) &  0.67 & \\
+      luajit         &  3.07 & \\
+      pypy           &  6.11 & \\
+      Lua 5.3        & 42.53 & \\
+      \hline
+      my\_fib -s1   & 34.67 & \textbf{20.00} \\
+      my\_fib -s2   & 18.10 & \textbf{9.96} \\
+      my\_fib -s3   & 17.95 & \textbf{8.91} \\
+      my\_fib -s4   & 15.83 & \textbf{7.38} \\
+      \hline
+    \end{tabular}
+    \caption{Original code vs. direct threaded code. Time in seconds}
+  \end{table}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\tiny
+\begin{frame}[fragile]
+  \frametitle{Optimization technique \#3. Pass ip and dsp via
+    registers}
+  Let's change command signature from\\
+  \textit{typedef void(*command\_t)(void)}\\
+  to\\
+  \textit{typedef void(*command\_t)(uintptr\_t* ip, uintptr\_t* dsp)}\\
+  As a result on many (most?) systems these arguments will be passed
+  through registers (rdi and rsi on x86-64 architecture). Thus, we
+  minimize the number of accesses to global variables \textbf{ip} and \textbf{dsp}.
+
+  Example:
+  \begin{CodeNoLabel}
+void svm_drop(uintptr_t* ip, uintptr_t* dsp) \{
+    --dsp;
+    // Jump to the next command using tail call!
+    ((command_t)(*ip++))(ip, dsp);
+\}
+
+assembler:
+    lea    r8,[rdi+0x8]           # r8  := ip + 8
+    mov    rax,QWORD PTR [rdi]    # rax := *ip
+    sub    rsi,0x8                # dsp -= 8
+    mov    rdi,r8                 # ip  := r8
+    jmp    rax                    # jump rax
+
+  \end{CodeNoLabel}
+
+  Note: This technique was stolen from wasm3 open source project.
+\end{frame}
+\normalsize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+  \frametitle{Optimization technique \#3. Pass ip and dsp via
+    registers}
+  \begin{CodeNoLabel}
+void svm_dup(uintptr_t* ip, uintptr_t* dsp) \{
+    uintptr_t value = (uintptr_t) *dsp;
+    * ++dsp = (uintptr_t)value;
+    // Jump to the next command using tail call!
+    ((command_t)(*ip++))(ip, dsp);
+\}
+
+assembler:
+   mov    rax,QWORD PTR [rsi]     # rax  := *dsp
+   lea    r8,[rdi+0x8]            # r8   := ip + 8
+   add    rsi,0x8                 # dsp  += 8
+   mov    QWORD PTR [rsi],rax     # *dsp := rax
+   mov    rax,QWORD PTR [rdi]     # rax  := *ip
+   mov    rdi,r8                  # ip   := r8
+   jmp    rax                     # jump rax
+  \end{CodeNoLabel}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+  \frametitle{Optimization technique \#3. Pass ip and dsp via registers}
+  \begin{table}
+    \begin{tabular}{ | l | r | r | r | }
+      \hline
+      \rowcolor{lightgray} tool & original & direct threaded
+      code & registers ip/dsp \\
+      \hline
+      C (gcc-10 -O2) &   0.67   &       & \\
+      luajit         &   3.07   &       & \\
+      pypy           &   6.11   &       & \\
+      Lua 5.3        &  42.53   &       & \\
+      \hline
+      my\_fib -s1    &  34.67   & 20.00 & \textbf{15.45} \\
+      my\_fib -s2    &  18.10   & 9.96  & \textbf{6.31} \\
+      my\_fib -s3    &  17.95   & 8.91  & \textbf{6.92} \\
+      my\_fib -s4    &  15.83   & 7.38  & \textbf{6.63} \\
+      \hline
+    \end{tabular}
+    \caption{\textit{ip} and \textit{dsp} are passed through registers. Time in seconds}
+  \end{table}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\smaller
+\begin{frame}
+  \frametitle{Register-based VM}
+  Stack frame structure:
+  \begin{itemize}
+  \item $r_0 (dsp[0])$: frame size
+  \item $r_1 (dsp[-1])$: caller's result register
+  \item $r_2..r_{k-1}$: arguments
+  \item $r_k...r_{n-1}$: local variables
+  \end{itemize}
+  Sequence of commands to execute:
+  \begin{table}
+    \begin{tabular}{ l | l | l | }
+      \rowcolor{lightgray} address & commands & comment \\
+      \hline
+
+      6  & 4                         & frame size \\
+      7  & JumpIfLeConst $r_2$ 1 27  & $if (r_2 \le 1) goto 27$ \\
+      11 & Dec1 $r_2$                & $r_2 := r_2 - 1$ \\
+      13 & Dec $r_3$ $r_2$           & $r_3 := r_2 - 1$ \\
+      16 & Call1 $r_2$ $r_2$ 6       & $r_2 := Call1(6, r_2)$ \\
+      20 & Call1 $r_3$ $r_3$ 6       & $r_3 := Call1(6, r_3)$ \\
+      24 & Add1 $r_2$ $r_3$          & $r_2 := r_2 + r_3$ \\
+      27 & Ret $r_2$                 & return $r_2$ \\
+
+    \end{tabular}
+    \caption{Code for register-based VM that calculates Fib(n) recursively}
+  \end{table}
+\end{frame}
+\normalsize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\tiny
+\begin{frame}[fragile]
+  \frametitle{Commands for Register-based VM}
+  \begin{CodeNoLabel}
+void rvm_add(uintptr_t* ip, uintptr_t* dsp) \{
+    int result_reg = (int) *ip++;
+    int a_reg = (int) *ip++;
+    int b_reg = (int) *ip++;
+    dsp[result_reg] = dsp[a_reg] + dsp[b_reg];
+    // Jump to the next command using tail call!
+    command_t next = (command_t) *ip++; next(ip, dsp);
+\}
+void rvm_jump_if_le_const(uintptr_t* ip, uintptr_t* dsp) \{
+    int arg_reg = (int) *ip++;
+    uintptr_t value = *ip++;
+    uintptr_t jump_to = (uintptr_t*) *ip++;
+    if (dsp[arg_reg] <= value) \{
+        ip = jump_to;
+    \}
+    // Jump to the next command using tail call!
+    command_t next = (command_t) *ip++; next(ip, dsp);
+\}
+  \end{CodeNoLabel}
+\end{frame}
+\normalsize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\footnotesize
+\begin{frame}[fragile]
+  \frametitle{Commands for Register-based VM}
+  \begin{CodeNoLabel}
+void rvm_call1(uintptr_t* ip, uintptr_t* dsp) \{
+    int result_reg = (int) *ip++;
+    int arg_reg = (int) *ip++;
+    uintptr_t* jump_to = (uintptr_t*) *ip++;
+    unsigned frame_size = *jump_to++;
+    uintptr_t arg = dsp[arg_reg];
+    uintptr_t* new_dsp = dsp + frame_size;
+    new_dsp[0] = frame_size;
+    new_dsp[-1] = result_reg;
+    new_dsp[-2] = arg;
+    command_t func = (command_t) *jump_to++;
+    func(jump_to, new_dsp);
+    // Jump to the next command using tail call!
+    command_t next = (command_t) *ip++; next(ip, dsp);
+\}
+  \end{CodeNoLabel}
+\end{frame}
+\normalsize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\footnotesize
+\begin{frame}[fragile]
+  \frametitle{Commands for Register-based VM}
+  \begin{CodeNoLabel}
+void rvm_ret(uintptr_t* ip, uintptr_t* dsp) \{
+    // callee's result register
+    int return_reg = (int) *ip++;
+    uintptr_t return_value = dsp[return_reg];
+    unsigned frame_size = (unsigned) *dsp;
+    // caller's result register
+    int result_reg = (int) dsp[-1];
+    dsp -= frame_size;
+    // copy result to the caller
+    dsp[result_reg] = return_value;
+\}
+  \end{CodeNoLabel}
+\end{frame}
+\normalsize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+  \frametitle{Benchmarks for register-based VM}
+  \begin{table}
+    \begin{tabular}{ | l | r | r | r | }
+      \hline
+      \rowcolor{lightgray} tool & original & direct threaded
+      code & registers ip/dsp \\
+      \hline
+      C (gcc-10 -O2) &   0.67   &       & \\
+      luajit         &   3.07   &       & \\
+      pypy           &   6.11   &       & \\
+      Lua 5.3        &  42.53   &       & \\
+      \hline
+      my\_fib -s1    &  34.67   & 20.00 & 15.45 \\
+      my\_fib -s2    &  18.10   & 9.96  & 6.31 \\
+      my\_fib -s3    &  17.95   & 8.91  & 6.92 \\
+      my\_fib -s4    &  15.83   & 7.38  & 6.63 \\
+      my\_fib -r1    &  \textbf{23.63}   & \textbf{11.84} & \textbf{6.45} \\
+      my\_fib -r2    &  \textbf{23.97}   & \textbf{11.74} & \textbf{6.24} \\
+      my\_fib -r3    &  \textbf{19.85}   & \textbf{9.84}  & \textbf{5.90} \\
+      \hline
+    \end{tabular}
+    \caption{Benchmarks for register-based VM. Time in seconds}
+  \end{table}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+  \frametitle{Conclusion}
+  \begin{itemize}
+  \item We learned how to build the stack-based and register-based VMs
+  \item We learned the Direct Threaded Code invented in 70's by Forth
+    programming language developers
+  \item We optimized Direct Threaded Code by passing often used values
+    of IP (instruction pointer) and DSP (data stack pointer) via CPU
+    registers
+  \item We compared performance of our VMs with popular programming
+    languages
+  \item Performance was very close JIT compilers and approximately 9
+    times slower than performance of C.
+  \end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+  \frametitle{}
+  \begin{center}
+    \Huge{The End}
+  \end{center}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
