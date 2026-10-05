@@ -444,7 +444,8 @@ int main(int argc, char** argv) {
 
 	// Run interpreter
 	uintptr_t *orig_dsp = dsp;
-	for (int i = 0; i < count; ++i) {
+	int i;
+	for (i = 0; i < count; ++i) {
 		ip = tc;
 		interp_run();
 		assert(dsp == orig_dsp);
