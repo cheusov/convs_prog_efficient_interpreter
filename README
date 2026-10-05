@@ -31,6 +31,7 @@ BUILD:
     $ # See DIRECT_THREADED_CODE and IP_DSP_REGISTERS define, valid values are 0 and 1
     $ less Makefile.common
     $ mkcmake c_fib my_fib
+    $ mkcmake test
     $ mkcmake presentation
 
 PLAY:
