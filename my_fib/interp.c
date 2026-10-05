@@ -45,12 +45,15 @@ static void* allocate_pages(size_t pcount) {
 	char* p = mmap(0, (pcount + 2) * PAGE_SIZE, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 	if (p == MAP_FAILED) {
 		perror("mmap(2) failed");
+		exit(1);
 	}
 	if (mprotect(p, PAGE_SIZE, PROT_NONE)) {
 		perror("mprotect(2) failed");
+		exit(2);
 	}
 	if (mprotect(p + (pcount + 1) * PAGE_SIZE, PAGE_SIZE, PROT_NONE)) {
 		perror("mprotect(2) failed");
+		exit(3);
 	}
 
 	return p + PAGE_SIZE;
