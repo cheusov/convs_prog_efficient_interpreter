@@ -377,7 +377,8 @@ int main(int argc, char** argv) {
 				} else if (!strcmp("4", optarg)) {
 					op = SVM_V4;
 				} else {
-					abort();
+					fprintf(stderr, "Unknown argument for option -s");
+					exit(1);
 				}
 				break;
 			case 'r':
@@ -388,7 +389,8 @@ int main(int argc, char** argv) {
 				} else if (!strcmp("3", optarg)) {
 					op = RVM_V3;
 				} else {
-					abort();
+					fprintf(stderr, "Unknown argument for option -r");
+					exit(1);
 				}
 				break;
 			case 't':
