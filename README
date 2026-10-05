@@ -36,9 +36,9 @@ BUILD:
 PLAY:
 
     $ ./my_fib/my_fib -h
-    $ ./my_fib/my_fib -c1 -n4
-    $ ./my_fib/my_fib -c1 -n5
-    $ ./my_fib/my_fib -c1 -n28
+    $ ./my_fib/my_fib -c1 -n4 -s1
+    $ ./my_fib/my_fib -c1 -n5 -r3
+    $ ./my_fib/my_fib -c1 -n28 -s4
     $ time -p ./c_fib/c_fib >/dev/null
     $ time -p ./my_fib/my_fib -r1 >/dev/null
     $ time -p ./my_fib/my_fib -r2 >/dev/null
