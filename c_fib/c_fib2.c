@@ -8,7 +8,8 @@ static unsigned fib(unsigned n) {
 }
 
 int main(int argc, char** argv) {
-	for (int i = 0; i < 1000; ++i) {
+	int i;
+	for (i = 0; i < 1000; ++i) {
 		printf("%u\n", fib(28));
 	}
 	return 0;
