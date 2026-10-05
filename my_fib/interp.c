@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <unistd.h>
 #include <sys/mman.h>
 
 #include "defs.h"
@@ -36,31 +37,45 @@
 
 #define DATA_STACK_SIZE 1000
 #define RETURN_STACK_SIZE 1000
-#define PAGE_SIZE 4096
+
+static int page_size = 0;
+
+int get_page_size(void) {
+	if (page_size == 0) {
+		page_size = sysconf(_SC_PAGE_SIZE);
+		if (page_size == -1) {
+			perror("sysconf(3) failed");
+			exit(1);
+		}
+	}
+	return page_size;
+}
 
 static void* allocate_pages(size_t pcount) {
 	// Allocate zero-ed pcount+2 pages and then disable access to the
 	// first and the last pages in order to be informed about
 	// overflow/underflow of data- or return stacks.
-	char* p = mmap(0, (pcount + 2) * PAGE_SIZE, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+	int psize = get_page_size();
+	char* p = mmap(0, (pcount + 2) * psize, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 	if (p == MAP_FAILED) {
 		perror("mmap(2) failed");
 		exit(1);
 	}
-	if (mprotect(p, PAGE_SIZE, PROT_NONE)) {
+	if (mprotect(p, psize, PROT_NONE)) {
 		perror("mprotect(2) failed");
 		exit(2);
 	}
-	if (mprotect(p + (pcount + 1) * PAGE_SIZE, PAGE_SIZE, PROT_NONE)) {
+	if (mprotect(p + (pcount + 1) * psize, psize, PROT_READ)) {
 		perror("mprotect(2) failed");
 		exit(3);
 	}
 
-	return p + PAGE_SIZE;
+	return p + psize;
 }
 
 static void deallocate_pages(void *p, size_t pcount) {
-	if (munmap((char*) p - PAGE_SIZE, (pcount + 2) * PAGE_SIZE)) {
+	int psize = get_page_size();
+	if (munmap((char*) p - psize, (pcount + 2) * psize)) {
 		perror("munmap(2) failed");
 	}
 }
@@ -88,7 +103,7 @@ uintptr_t* dsp = NULL;
 uintptr_t* rsp = NULL;
 #endif
 
-#define BYTES2PAGES(x) ((x) + PAGE_SIZE - 1) / PAGE_SIZE
+#define BYTES2PAGES(x) (((x) + get_page_size() - 1) / get_page_size())
 
 static size_t ds_pages = 0;
 #if !DIRECT_THREADED_CODE
@@ -113,8 +128,4 @@ void interp_destroy(void) {
 #if !DIRECT_THREADED_CODE
 	deallocate_pages(rs, rs_pages);
 #endif
-}
-
-size_t interp_page_size(void) {
-	return PAGE_SIZE;
 }
