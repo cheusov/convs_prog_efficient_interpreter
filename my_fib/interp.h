@@ -38,4 +38,4 @@ extern uintptr_t* rsp; // return stack pointer
 void interp_init(void);
 void interp_run(void);
 void interp_destroy(void);
-size_t interp_page_size(void);
+int get_page_size(void);

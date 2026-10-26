@@ -97,4 +97,4 @@ void tc_destroy(void);
 #define RVM_JUMP_IF_ZERO(arg_reg, offset)         tc_insert_jump2(rvm_jump_if_zero, -arg_reg, offset);
 #define RVM_JUMP_IF_EQ_CONST(arg_reg, value, offset) tc_insert_jump3(rvm_jump_if_eq_const, -arg_reg, value, offset);
 #define RVM_JUMP_IF_LE_CONST(arg_reg, value, offset) tc_insert_jump3(rvm_jump_if_le_const, -arg_reg, value, offset);
-#define RVM_FRAMESIZE(frame_size)                 assert(frame_size < interp_page_size()); tc_insert_value(frame_size);
+#define RVM_FRAMESIZE(frame_size)                 assert(frame_size < get_page_size()); tc_insert_value(frame_size);

@@ -377,7 +377,8 @@ int main(int argc, char** argv) {
 				} else if (!strcmp("4", optarg)) {
 					op = SVM_V4;
 				} else {
-					abort();
+					fprintf(stderr, "Unknown argument for option -s");
+					exit(1);
 				}
 				break;
 			case 'r':
@@ -388,7 +389,8 @@ int main(int argc, char** argv) {
 				} else if (!strcmp("3", optarg)) {
 					op = RVM_V3;
 				} else {
-					abort();
+					fprintf(stderr, "Unknown argument for option -r");
+					exit(1);
 				}
 				break;
 			case 't':
@@ -442,7 +444,8 @@ int main(int argc, char** argv) {
 
 	// Run interpreter
 	uintptr_t *orig_dsp = dsp;
-	for (int i = 0; i < count; ++i) {
+	int i;
+	for (i = 0; i < count; ++i) {
 		ip = tc;
 		interp_run();
 		assert(dsp == orig_dsp);

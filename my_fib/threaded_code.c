@@ -122,7 +122,8 @@ void tc_label(const char *label) {
 
 void tc_resolve(void) {
 	// O(n*m) I know, this is very inefficient
-	for (size_t jn = 0; jn < jump_count; ++jn) {
+	size_t jn;
+	for (jn = 0; jn < jump_count; ++jn) {
 		size_t ln;
 		for (ln = 0; ln < label_count; ++ln) {
 			if (!strcmp(labels[ln], jump_labels[jn])) {

@@ -33,31 +33,31 @@
 CMD_DECL(uni_println_charS)
 
 // basic Forth-like stack-based virtual machine (SVM) commands
-CMD_DECL(svm_add_uint)
-CMD_DECL(svm_subtract_uint)
-CMD_DECL(svm_dec)
-CMD_DECL(svm_dup)
-CMD_DECL(svm_swap)
-CMD_DECL(svm_eq)
-CMD_DECL(svm_neq)
-CMD_DECL(svm_println_uint)
-CMD_DECL(svm_push)
-CMD_DECL(svm_push0)
-CMD_DECL(svm_drop)
-CMD_DECL(svm_nop)
-CMD_DECL(svm_call)
-CMD_DECL(svm_jump)
-CMD_DECL(svm_jump_if_zero)
-CMD_DECL(svm_jump_if_notzero)
-CMD_DECL(svm_ret)
-CMD_DECL(svm_exit)
+CMD_DECL(svm_add_uint)                     //     --> n
+CMD_DECL(svm_subtract_uint)                // n m --> n - m
+CMD_DECL(svm_dec)                          //   n --> n - 1
+CMD_DECL(svm_dup)                          //   n --> n n
+CMD_DECL(svm_swap)                         // n m --> m n
+CMD_DECL(svm_eq)                           // n m --> n == m
+CMD_DECL(svm_neq)                          // n m --> n != m
+CMD_DECL(svm_println_uint)                 //   n -->
+CMD_DECL(svm_push)                         //     --> n
+CMD_DECL(svm_push0)                        //     --> 0
+CMD_DECL(svm_drop)                         //   n -->
+CMD_DECL(svm_nop)                          //     -->
+CMD_DECL(svm_call)                         //     -->
+CMD_DECL(svm_jump)                         //     -->
+CMD_DECL(svm_jump_if_zero)                 //   n -->
+CMD_DECL(svm_jump_if_notzero)              //   n -->
+CMD_DECL(svm_ret)                          //     -->
+CMD_DECL(svm_exit)                         // exits
 
-// Extended commands for better efficiency
-CMD_DECL(svm_dup_jump_if_zero)       // check top value and jump if 0
+// Extended (bigger) commands for better efficiency
+CMD_DECL(svm_dup_jump_if_zero)             // check top value and jump if 0
 CMD_DECL(svm_dup_jump_if_eq_const)         // check top value and jump if equals to constant
 CMD_DECL(svm_dup_jump_if_le_const)         // check top value and jump if <= constant
-CMD_DECL(svm_jump_and_drop_if_zero)  // check top value, jump if 0 and drop if succeeded
+CMD_DECL(svm_jump_and_drop_if_zero)        // check top value, jump if 0 and drop if succeeded
 CMD_DECL(svm_jump_and_drop_if_eq_const)    // check top value, jump if eq and drop if succeeded
-CMD_DECL(svm_drop_push)              // set top stack value to constant
-CMD_DECL(svm_drop_push0)             // set top stack value to 0
-CMD_DECL(svm_push_ret)               // return constant
+CMD_DECL(svm_drop_push)                    // set top stack value to constant
+CMD_DECL(svm_drop_push0)                   // set top stack value to 0
+CMD_DECL(svm_push_ret)                     // return constant
