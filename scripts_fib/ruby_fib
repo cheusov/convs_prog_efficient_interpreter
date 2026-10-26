@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+
+def fib(n)
+  return 0 if n == 0
+  return 1 if n == 1
+  fib(n - 1) + fib(n - 2)
+end
+
+(0..1000).each do
+  puts "#{fib(28)}"
+end
