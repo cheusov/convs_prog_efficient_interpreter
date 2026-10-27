@@ -1,0 +1,12 @@
+: fib
+dup 1 > if
+  1- dup 1- recurse swap recurse +
+then
+;
+
+: repeat-n ( n -- )
+  0 do
+    28 fib .
+  loop ;
+
+1000 repeat-n
