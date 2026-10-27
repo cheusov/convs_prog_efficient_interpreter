@@ -9,5 +9,8 @@ test_output:
 	${.OBJDIR}/c_fib2 -n20 -c1;\
 	${.OBJDIR}/c_fib2 -n19 -c5
 
+# COPTS        ?=	-O1
+CFLAGS.check += -fomit-frame-pointer
+
 .include <mkc.minitest.mk>
 .include <mkc.prog.mk>
