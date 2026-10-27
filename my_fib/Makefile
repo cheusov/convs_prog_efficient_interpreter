@@ -5,6 +5,8 @@ SRCS.my_fib   =	my_fib.c interp.c threaded_code.c svm.c rvm.c
 
 CFLAGS.check  =	-Wno-shadow
 
+CFLAGS.check +=	-foptimize-sibling-calls # explicitely enable tail call optimization
+
 .PHONY : test_output
 test_output:
 	@${.OBJDIR}/my_fib -n20 -c2 -r1; \
