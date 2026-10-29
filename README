@@ -50,6 +50,8 @@ PLAY:
     $ time -p ./my_fib/my_fib -r3 >/dev/null
     $ time -p ./scripts_fib/lua_fib >/dev/null
 
+    $ mkcmake bench && cat bench.tsv
+
 THINK:
 
     $ less c_fib/c_fib.c
