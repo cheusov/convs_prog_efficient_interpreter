@@ -10,7 +10,7 @@ tool_lang_script +=	gawk      -f   AWK        Interpreter scripts_fib/awk_fib
 tool_lang_script +=	mawk      -f   AWK        Interpreter scripts_fib/awk_fib
 tool_lang_script +=	nawk      -f   AWK        Interpreter scripts_fib/awk_fib
 tool_lang_script +=	js         _   EcmaScript Interpreter scripts_fib/js_fib
-tool_lang_script +=	rhino      _   EcmaScript JIT         scripts_fib/js_fib
+tool_lang_script +=	rhino      _   EcmaScript Interpreter scripts_fib/js_fib
 tool_lang_script +=	node       _   EcmaScript JIT         scripts_fib/nodejs_fib
 tool_lang_script +=	slsh       _   Slang      Interpreter scripts_fib/slang_fib
 tool_lang_script +=	perl       _   Perl       Interpreter scripts_fib/perl_fib
@@ -35,7 +35,7 @@ bench.tsv:
 	    echo 'done' 1>&2; \
 	  } >> ${.TARGET}; \
 	else \
-	  echo 'skipped' 1>&2; \
+	  echo 'NOT FOUND' 1>&2; \
 	fi
 .endfor
 
