@@ -1,6 +1,9 @@
 .PHONY: bench
 bench: bench.tsv
 
+tool_lang_script +=	./c_fib/c_fib   _ C       Compiler    _
+tool_lang_script +=	./my_fib/my_fib -s4 -     -    _
+tool_lang_script +=	./my_fib/my_fib -r3 -     -    _
 tool_lang_script +=	luajit     _   Lua        JIT         scripts_fib/lua_fib
 tool_lang_script +=	lua        _   Lua        Interpreter scripts_fib/lua_fib
 tool_lang_script +=	gforth     <   Forth      Interpreter scripts_fib/forth_fib
@@ -19,9 +22,6 @@ tool_lang_script +=	python3.13 _   Python3    Interpreter scripts_fib/python_fib
 tool_lang_script +=	pypy       _   Python3    JIT         scripts_fib/python_fib
 tool_lang_script +=	pike       _   Pike       Interpreter scripts_fib/pike_fib
 tool_lang_script +=	php8.5     _   PHP        Interpreter scripts_fib/php_fib
-tool_lang_script +=	./my_fib/my_fib -s4 -     Compiler    _
-tool_lang_script +=	./my_fib/my_fib -r3 -     Compiler    _
-tool_lang_script +=	./c_fib/c_fib   _ C       Compiler    _
 
 bench.tsv:
 	@rm -f ${.TARGET}
