@@ -28,7 +28,7 @@ bench.tsv:
 .for t o l ijc s in ${tool_lang_script}
 	@cmd=`which ${t} 2>/dev/null`; \
 	printf '%s' 'Bench for ${t:T}... ' 1>&2; \
-	if test -n "$$cmd"; then  \
+	if test -x ${t:Q} -o -n "$$cmd"; then  \
 	  { printf '%s %s\t%s\t%s\t' ${t:T} "${o:S/^_$//}" ${l:Q} ${ijc:Q}; \
 	    time -p ${t} ${o:S/_//} ${s:S/^_$//} 2>&1 >/dev/null | \
 	    awk '$$1 == "user" {print $$2}'; \
