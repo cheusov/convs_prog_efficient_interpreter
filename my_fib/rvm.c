@@ -36,28 +36,28 @@ CMD_IMPLEMENTATION(rvm_call) {
 	int result_reg = ip++->i;
 	int arg_reg = ip++->i;
 	cell_t* jump_to = ip++->cell;
-	unsigned frame_size = jump_to->u; // frame size from callee's threaded code
-	++jump_to;
+	unsigned frame_size = jump_to++->u; // frame size from callee's threaded code
 	fullcell_t arg = dsp[arg_reg].fullcell;
 	cell_t* new_dsp = dsp + frame_size;
 	new_dsp[0].u = frame_size;
 	new_dsp[-1].i = result_reg;
 	new_dsp[-2].fullcell = arg;
-#if !DIRECT_THREADED_CODE
+#if IP_DSP_REGISTERS
+	command_t func = jump_to++->cmd;
+	func(jump_to, new_dsp);
+#elif DIRECT_THREADED_CODE
+	dsp = new_dsp;
+	cell_t* old_ip = ip; // keep return address of VM on system stack
+	ip = jump_to;
+	command_t func = ip++->cmd;
+	func();
+	ip = old_ip;
+#else
 	dsp = new_dsp;
 	(++rsp)->cell = ip;
 	ip = jump_to;
-#elif IP_DSP_REGISTERS
-	command_t func = jump_to->cmd;
-	++jump_to;
-	func(jump_to, new_dsp);
-#else
-	cell_t* old_ip = ip;
-	ip = jump_to;
 	command_t func = ip++->cmd;
-	dsp = new_dsp;
 	func();
-	ip = old_ip;
 #endif
 } CMD_END
 

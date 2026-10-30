@@ -101,25 +101,27 @@ CMD_IMPLEMENTATION(svm_nop) {
 
 #if IP_DSP_REGISTERS
 void svm_call(cell_t* ip, cell_t* _dsp) { {
-#else
-CMD_IMPLEMENTATION(svm_call) {
-#endif
 	cell_t* jump_to = ip++->cell;
-#if DIRECT_THREADED_CODE
+	cell_t* new_ip = jump_to;
+	command_t func = new_ip++->cmd;
+	func(new_ip, _dsp);
+} CMD_END
+#elif DIRECT_THREADED_CODE
+CMD_IMPLEMENTATION(svm_call) {
+	cell_t* jump_to = ip++->cell;
 	cell_t* old_ip = ip;
 	ip = jump_to;
 	command_t func = ip++->cmd;
-#if IP_DSP_REGISTERS
-	func(ip, _dsp);
-#else
 	func();
-#endif
 	ip = old_ip;
+} CMD_END
 #else
+CMD_IMPLEMENTATION(svm_call) {
+	cell_t* jump_to = ip++->cell;
 	(++rsp)->cell = ip;
 	ip = jump_to;
-#endif
 } CMD_END
+#endif
 
 CMD_IMPLEMENTATION(svm_jump) {
 	ip = ip->cell;
