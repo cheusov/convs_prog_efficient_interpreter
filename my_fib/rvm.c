@@ -63,11 +63,11 @@ CMD_IMPLEMENTATION(rvm_call) {
 
 CMD_IMPLEMENTATION(rvm_ret) {
 	int return_reg = ip++->i; // callee's result register
-	unsigned return_value = dsp[return_reg].u;
+	fullcell_t return_value = dsp[return_reg].fullcell;
 	unsigned frame_size = dsp->u;
 	int result_reg = dsp[-1].i; // // caller's result register
 	dsp -= frame_size;
-	dsp[result_reg].u = return_value; // copy result to the caller
+	dsp[result_reg].fullcell = return_value; // copy result to the caller
 #if DIRECT_THREADED_CODE
 	return;
 #else
@@ -83,29 +83,29 @@ CMD_IMPLEMENTATION(rvm_println_uint) {
 
 CMD_IMPLEMENTATION(rvm_set) {
 	int result_reg = ip++->i;
-	unsigned value = ip++->u;
-	dsp[result_reg].u = value;
+	fullcell_t value = ip++->fullcell;
+	dsp[result_reg].fullcell = value;
 } CMD_END
 
-CMD_IMPLEMENTATION(rvm_dec) {
+CMD_IMPLEMENTATION(rvm_udec) {
 	int result_reg = ip++->i;
 	int arg_reg = ip++->i;
 	dsp[result_reg].u = dsp[arg_reg].u - 1;
 } CMD_END
 
-CMD_IMPLEMENTATION(rvm_dec1) {
+CMD_IMPLEMENTATION(rvm_udec1) {
 	int result_reg = ip++->i;
 	--dsp[result_reg].u;
 } CMD_END
 
-CMD_IMPLEMENTATION(rvm_add) {
+CMD_IMPLEMENTATION(rvm_uadd) {
 	int result_reg = ip++->i;
 	int a_reg = ip++->i;
 	int b_reg = ip++->i;
 	dsp[result_reg].u = dsp[a_reg].u + dsp[b_reg].u;
 } CMD_END
 
-CMD_IMPLEMENTATION(rvm_add1) {
+CMD_IMPLEMENTATION(rvm_uadd1) {
 	int result_reg = ip++->i;
 	int value_reg = ip++->i;
 	dsp[result_reg].u += dsp[value_reg].u;
@@ -121,15 +121,15 @@ CMD_IMPLEMENTATION(rvm_exit) {
 } CMD_END
 #endif
 
-CMD_IMPLEMENTATION(rvm_jump_if_zero) {
+CMD_IMPLEMENTATION(rvm_jump_if_uzero) {
 	int arg_reg = ip++->i;
 	cell_t* jump_to = ip++->cell;
-	if (!dsp[arg_reg].b) {
+	if (!dsp[arg_reg].u) {
 		ip = jump_to;
 	}
 } CMD_END
 
-CMD_IMPLEMENTATION(rvm_jump_if_eq_const) {
+CMD_IMPLEMENTATION(rvm_jump_if_eq_uconst) {
 	int arg_reg = ip++->i;
 	unsigned value = ip++->u;
 	cell_t* jump_to = ip++->cell;
@@ -138,7 +138,7 @@ CMD_IMPLEMENTATION(rvm_jump_if_eq_const) {
 	}
 } CMD_END
 
-CMD_IMPLEMENTATION(rvm_jump_if_le_const) {
+CMD_IMPLEMENTATION(rvm_jump_if_le_uconst) {
 	int arg_reg = ip++->i;
 	unsigned value = ip++->u;
 	cell_t* jump_to = ip++->cell;

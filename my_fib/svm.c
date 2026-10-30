@@ -80,20 +80,20 @@ CMD_IMPLEMENTATION(svm_swap) {
 	dsp[-1] = top;
 } CMD_END
 
-CMD_IMPLEMENTATION(svm_dec) {
+CMD_IMPLEMENTATION(svm_dec_uint) {
 	--dsp->u;
 } CMD_END
 
-CMD_IMPLEMENTATION(svm_eq) {
+CMD_IMPLEMENTATION(svm_eq_uint) {
 	cell_t y = *dsp--;
 	cell_t x = *dsp;
-	dsp->b = (x.u == y.u);
+	dsp->u = (x.u == y.u);
 } CMD_END
 
-CMD_IMPLEMENTATION(svm_neq) {
+CMD_IMPLEMENTATION(svm_neq_uint) {
 	cell_t y = *dsp--;
 	cell_t x = *dsp;
-	dsp->b = (x.u != y.u);
+	dsp->u = (x.u != y.u);
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_nop) {
@@ -125,33 +125,30 @@ CMD_IMPLEMENTATION(svm_jump) {
 	ip = ip->cell;
 } CMD_END
 
-CMD_IMPLEMENTATION(svm_jump_if_zero) {
-	int condition = dsp->b;
+CMD_IMPLEMENTATION(svm_jump_if_uzero) {
 	--dsp;
 	cell_t* jump_to = ip++->cell;
-	if (!condition) {
+	if (!dsp->u) {
 		ip = jump_to;
 	}
 } CMD_END
 
-CMD_IMPLEMENTATION(svm_jump_and_drop_if_zero) {
-	int condition = dsp->b;
+CMD_IMPLEMENTATION(svm_jump_and_drop_if_uzero) {
 	cell_t* jump_to = ip++->cell;
-	if (!condition) {
+	if (!dsp->u) {
 		--dsp; // remove zero from stack
 		ip = jump_to;
 	}
 } CMD_END
 
-CMD_IMPLEMENTATION(svm_dup_jump_if_zero) {
-	int condition = dsp->b;
+CMD_IMPLEMENTATION(svm_dup_jump_if_uzero) {
 	cell_t* jump_to = ip++->cell;
-	if (!condition) {
+	if (!dsp->u) {
 		ip = jump_to;
 	}
 } CMD_END
 
-CMD_IMPLEMENTATION(svm_jump_and_drop_if_eq_const) {
+CMD_IMPLEMENTATION(svm_jump_and_drop_if_eq_uconst) {
 	unsigned top = dsp->u;
 	unsigned constant = ip++->u;
 	cell_t* jump_to = ip++->cell;
@@ -161,7 +158,7 @@ CMD_IMPLEMENTATION(svm_jump_and_drop_if_eq_const) {
 	}
 } CMD_END
 
-CMD_IMPLEMENTATION(svm_dup_jump_if_eq_const) {
+CMD_IMPLEMENTATION(svm_dup_jump_if_eq_uconst) {
 	unsigned top = dsp->u;
 	unsigned constant = ip++->u;
 	cell_t* jump_to = ip++->cell;
@@ -170,7 +167,7 @@ CMD_IMPLEMENTATION(svm_dup_jump_if_eq_const) {
 	}
 } CMD_END
 
-CMD_IMPLEMENTATION(svm_dup_jump_if_le_const) {
+CMD_IMPLEMENTATION(svm_dup_jump_if_le_uconst) {
 	unsigned top = dsp->u;
 	unsigned constant = ip++->u;
 	cell_t* jump_to = ip++->cell;
@@ -179,7 +176,7 @@ CMD_IMPLEMENTATION(svm_dup_jump_if_le_const) {
 	}
 } CMD_END
 
-CMD_IMPLEMENTATION(svm_jump_if_notzero) {
+CMD_IMPLEMENTATION(svm_jump_if_unotzero) {
 	unsigned condition = dsp->u;
 	--dsp;
 	cell_t* jump_to = ip++->cell;
