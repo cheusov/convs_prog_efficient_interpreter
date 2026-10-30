@@ -33,26 +33,28 @@
 #include "threaded_code.h"
 
 CMD_IMPLEMENTATION(rvm_call) {
-	int result_reg = (int) *ip++;
-	int arg_reg = (int) *ip++;
-	uintptr_t* jump_to = (uintptr_t*) *ip++;
-	unsigned frame_size = *jump_to++; // frame size from callee's threaded code
-	uintptr_t arg = dsp[arg_reg];
-	uintptr_t* new_dsp = dsp + frame_size;
-	new_dsp[0] = frame_size;
-	new_dsp[-1] = result_reg;
-	new_dsp[-2] = arg;
+	int result_reg = ip++->i;
+	int arg_reg = ip++->i;
+	cell_t* jump_to = ip++->cell;
+	unsigned frame_size = jump_to->u; // frame size from callee's threaded code
+	++jump_to;
+	fullcell_t arg = dsp[arg_reg].fullcell;
+	cell_t* new_dsp = dsp + frame_size;
+	new_dsp[0].u = frame_size;
+	new_dsp[-1].i = result_reg;
+	new_dsp[-2].fullcell = arg;
 #if !DIRECT_THREADED_CODE
 	dsp = new_dsp;
-	* ++rsp = (uintptr_t) ip;
+	(++rsp)->cell = ip;
 	ip = jump_to;
 #elif IP_DSP_REGISTERS
-	command_t func = (command_t) *jump_to++;
+	command_t func = jump_to->cmd;
+	++jump_to;
 	func(jump_to, new_dsp);
 #else
-	uintptr_t* old_ip = ip;
+	cell_t* old_ip = ip;
 	ip = jump_to;
-	command_t func = (command_t) *ip++;
+	command_t func = ip++->cmd;
 	dsp = new_dsp;
 	func();
 	ip = old_ip;
@@ -60,52 +62,53 @@ CMD_IMPLEMENTATION(rvm_call) {
 } CMD_END
 
 CMD_IMPLEMENTATION(rvm_ret) {
-	int return_reg = (int) *ip++; // callee's result register
-	uintptr_t return_value = dsp[return_reg];
-	unsigned frame_size = (unsigned) *dsp;
-	int result_reg = (int) dsp[-1]; // // caller's result register
+	int return_reg = ip++->i; // callee's result register
+	unsigned return_value = dsp[return_reg].u;
+	unsigned frame_size = dsp->u;
+	int result_reg = dsp[-1].i; // // caller's result register
 	dsp -= frame_size;
-	dsp[result_reg] = return_value; // copy result to the caller
+	dsp[result_reg].u = return_value; // copy result to the caller
 #if DIRECT_THREADED_CODE
 	return;
 #else
-	ip = (uintptr_t*) *rsp--;
+	ip = rsp->cell;
+	--rsp;
 #endif
 } CMD_END
 
 CMD_IMPLEMENTATION(rvm_println_uint) {
-	int arg_reg = (int) *ip++;
-	printf("%u\n", (unsigned)dsp[arg_reg]);
+	int arg_reg = ip++->i;
+	printf("%u\n", dsp[arg_reg].u);
 } CMD_END
 
 CMD_IMPLEMENTATION(rvm_set) {
-	int result_reg = (int) *ip++;
-	uintptr_t value = *ip++;
-	dsp[result_reg] = value;
+	int result_reg = ip++->i;
+	unsigned value = ip++->u;
+	dsp[result_reg].u = value;
 } CMD_END
 
 CMD_IMPLEMENTATION(rvm_dec) {
-	int result_reg = (int) *ip++;
-	int arg_reg = (int) *ip++;
-	dsp[result_reg] = dsp[arg_reg] - 1;
+	int result_reg = ip++->i;
+	int arg_reg = ip++->i;
+	dsp[result_reg].u = dsp[arg_reg].u - 1;
 } CMD_END
 
 CMD_IMPLEMENTATION(rvm_dec1) {
-	int result_reg = (int) *ip++;
-	--dsp[result_reg];
+	int result_reg = ip++->i;
+	--dsp[result_reg].u;
 } CMD_END
 
 CMD_IMPLEMENTATION(rvm_add) {
-	int result_reg = (int) *ip++;
-	int a_reg = (int) *ip++;
-	int b_reg = (int) *ip++;
-	dsp[result_reg] = dsp[a_reg] + dsp[b_reg];
+	int result_reg = ip++->i;
+	int a_reg = ip++->i;
+	int b_reg = ip++->i;
+	dsp[result_reg].u = dsp[a_reg].u + dsp[b_reg].u;
 } CMD_END
 
 CMD_IMPLEMENTATION(rvm_add1) {
-	int result_reg = (int) *ip++;
-	int value_reg = (int) *ip++;
-	dsp[result_reg] += dsp[value_reg];
+	int result_reg = ip++->i;
+	int value_reg = ip++->i;
+	dsp[result_reg].u += dsp[value_reg].u;
 } CMD_END
 
 #if DIRECT_THREADED_CODE
@@ -119,27 +122,27 @@ CMD_IMPLEMENTATION(rvm_exit) {
 #endif
 
 CMD_IMPLEMENTATION(rvm_jump_if_zero) {
-	int arg_reg = (int) *ip++;
-	uintptr_t jump_to = *ip++;
-	if (!dsp[arg_reg]) {
-		ip = (uintptr_t*) jump_to;
+	int arg_reg = ip++->i;
+	cell_t* jump_to = ip++->cell;
+	if (!dsp[arg_reg].b) {
+		ip = jump_to;
 	}
 } CMD_END
 
 CMD_IMPLEMENTATION(rvm_jump_if_eq_const) {
-	int arg_reg = (int) *ip++;
-	uintptr_t value = *ip++;
-	uintptr_t* jump_to = (uintptr_t*) *ip++;
-	if (dsp[arg_reg] == value) {
+	int arg_reg = ip++->i;
+	unsigned value = ip++->u;
+	cell_t* jump_to = ip++->cell;
+	if (dsp[arg_reg].u == value) {
 		ip = jump_to;
 	}
 } CMD_END
 
 CMD_IMPLEMENTATION(rvm_jump_if_le_const) {
-	int arg_reg = (int) *ip++;
-	uintptr_t value = *ip++;
-	uintptr_t jump_to = *ip++;
-	if (dsp[arg_reg] <= value) {
-		ip = (uintptr_t*) jump_to;
+	int arg_reg = ip++->i;
+	unsigned value = ip++->u;
+	cell_t* jump_to = ip++->cell;
+	if (dsp[arg_reg].u <= value) {
+		ip = jump_to;
 	}
 } CMD_END

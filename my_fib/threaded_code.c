@@ -37,7 +37,7 @@
 #define LABEL_COUNT 100
 #define JUMP_COUNT 200
 
-uintptr_t tc[TC_SIZE];
+cell_t tc[TC_SIZE];
 static unsigned tc_offset = 0;
 
 static const char *labels[LABEL_COUNT];
@@ -48,16 +48,18 @@ static const char *jump_labels[JUMP_COUNT];
 static unsigned jump_offsets[sizeof(jump_labels)/sizeof(jump_labels[0])];
 static size_t jump_count = 0;
 
-void tc_insert_value(uintptr_t value) {
+void tc_insert_value(fullcell_t value) {
 	if (tc_offset == sizeof(tc)/sizeof(tc[0])) {
 		fprintf(stderr, "Too many commands in threaded code\n");
 		exit(2);
 	}
-	tc[tc_offset++] = value;
+	tc[tc_offset++].fullcell = value;
 }
 
 void tc_insert_call(command_t f) {
-	tc_insert_value((uintptr_t) f);
+	cell_t c;
+	c.cmd = f;
+	tc_insert_value(c.fullcell);
 }
 
 void tc_insert_call1(command_t f, uintptr_t value) {
@@ -127,7 +129,7 @@ void tc_resolve(void) {
 		size_t ln;
 		for (ln = 0; ln < label_count; ++ln) {
 			if (!strcmp(labels[ln], jump_labels[jn])) {
-				tc[jump_offsets[jn]] = (uintptr_t) (tc + label_offsets[ln]);
+				tc[jump_offsets[jn]].cell = tc + label_offsets[ln];
 				break;
 			}
 		}

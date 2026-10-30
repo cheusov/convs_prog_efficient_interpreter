@@ -31,7 +31,7 @@
 
 #include "defs.h"
 
-extern uintptr_t tc[];
+extern cell_t tc[];
 
 void tc_init(void);
 void tc_insert_value(uintptr_t value);

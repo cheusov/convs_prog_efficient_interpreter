@@ -82,25 +82,27 @@ static void deallocate_pages(void *p, size_t pcount) {
 
 void interp_run(void) {
 #if DIRECT_THREADED_CODE
-	command_t func = (command_t) *ip++;
+	command_t func = ip->cmd;
+	++ip;
 	func(PASS_ARGS);
 #else
 	while (ip) {
-		command_t func = (command_t) *ip++;
+		command_t func = ip->cmd;
+		++ip;
 		func();
 	}
 #endif
 }
 
-static uintptr_t* ds = NULL; // data stack (grows upword!)
+static cell_t* ds = NULL; // data stack (grows upword!)
 #if !DIRECT_THREADED_CODE
-static uintptr_t* rs = NULL; // return stack (grows upword!)
+static cell_t* rs = NULL; // return stack (grows upword!)
 #endif
 
-uintptr_t* ip = NULL;
-uintptr_t* dsp = NULL;
+cell_t* ip = NULL;
+cell_t* dsp = NULL;
 #if !DIRECT_THREADED_CODE
-uintptr_t* rsp = NULL;
+cell_t* rsp = NULL;
 #endif
 
 #define BYTES2PAGES(x) (((x) + get_page_size() - 1) / get_page_size())
@@ -120,7 +122,7 @@ void interp_init(void) {
 	rsp = rs - 1;
 #endif
 
-	ip = tc;
+	ip = (cell_t*)tc;
 }
 
 void interp_destroy(void) {

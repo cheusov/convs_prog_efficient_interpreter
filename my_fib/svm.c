@@ -33,34 +33,36 @@
 #include "threaded_code.h"
 
 CMD_IMPLEMENTATION(svm_add_uint) {
-	unsigned b = (unsigned) *dsp--;
-	unsigned a = (unsigned) *dsp;
-	*dsp = (uintptr_t) (a + b);
+	unsigned b = dsp->u;
+	--dsp;
+	unsigned a = dsp->u;
+	dsp->u = a + b;
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_subtract_uint) {
-	unsigned b = (unsigned) *dsp--;
-	unsigned a = (unsigned) *dsp;
-	*dsp = (uintptr_t) (a - b);
+	unsigned b = dsp->u;
+	--dsp;
+	unsigned a = dsp->u;
+	dsp->u = a - b;
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_println_uint) {
-	unsigned value = (unsigned) *dsp--;
+	unsigned value = dsp->u;
+	--dsp;
 	printf("%u\n", value);
 } CMD_END
 
 CMD_IMPLEMENTATION(uni_println_charS) {
-	const char* str = (const char*) *ip++;
+	const char* str = ip++->ptr;
 	printf("%s\n", str);
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_push) {
-	uintptr_t value = *ip++;
-	* ++dsp = value;
+	* ++dsp = *ip++;
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_push0) {
-	* ++dsp = 0;
+	(++dsp)->fullcell = 0;
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_drop) {
@@ -68,45 +70,45 @@ CMD_IMPLEMENTATION(svm_drop) {
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_dup) {
-	uintptr_t value = (uintptr_t) *dsp;
-	* ++dsp = (uintptr_t)value;
+	cell_t value = *dsp;
+	* ++dsp = value;
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_swap) {
-	uintptr_t top = dsp[0];
+	cell_t top = dsp[0];
 	dsp[0] = dsp[-1];
 	dsp[-1] = top;
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_dec) {
-	--dsp[0];
+	--dsp->u;
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_eq) {
-	uintptr_t b = *dsp--;
-	uintptr_t a = *dsp;
-	*dsp = (a == b);
+	cell_t y = *dsp--;
+	cell_t x = *dsp;
+	dsp->b = (x.u == y.u);
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_neq) {
-	uintptr_t b = *dsp--;
-	uintptr_t a = *dsp;
-	*dsp = (a != b);
+	cell_t y = *dsp--;
+	cell_t x = *dsp;
+	dsp->b = (x.u != y.u);
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_nop) {
 } CMD_END
 
 #if IP_DSP_REGISTERS
-void svm_call(uintptr_t* ip, uintptr_t* _dsp) { {
+void svm_call(cell_t* ip, cell_t* _dsp) { {
 #else
 CMD_IMPLEMENTATION(svm_call) {
 #endif
-	uintptr_t* jump_to = (uintptr_t*) *ip++;
+	cell_t* jump_to = ip++->cell;
 #if DIRECT_THREADED_CODE
-	uintptr_t* old_ip = ip;
+	cell_t* old_ip = ip;
 	ip = jump_to;
-	command_t func = (command_t) *ip++;
+	command_t func = ip++->cmd;
 #if IP_DSP_REGISTERS
 	func(ip, _dsp);
 #else
@@ -114,102 +116,101 @@ CMD_IMPLEMENTATION(svm_call) {
 #endif
 	ip = old_ip;
 #else
-	* ++rsp = (uintptr_t) ip;
+	(++rsp)->cell = ip;
 	ip = jump_to;
 #endif
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_jump) {
-	uintptr_t* jump_to = (uintptr_t*) *ip++;
-	ip = jump_to;
+	ip = ip->cell;
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_jump_if_zero) {
-	uintptr_t condition = *dsp--;
-	uintptr_t jump_to = *ip++;
+	int condition = dsp->b;
+	--dsp;
+	cell_t* jump_to = ip++->cell;
 	if (!condition) {
-		ip = (uintptr_t*) jump_to;
+		ip = jump_to;
 	}
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_jump_and_drop_if_zero) {
-	uintptr_t condition = *dsp;
-	uintptr_t jump_to = *ip++;
+	int condition = dsp->b;
+	cell_t* jump_to = ip++->cell;
 	if (!condition) {
-		--dsp; // remove known value from stack
-		ip = (uintptr_t*) jump_to;
+		--dsp; // remove zero from stack
+		ip = jump_to;
 	}
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_dup_jump_if_zero) {
-	uintptr_t condition = *dsp;
-	uintptr_t jump_to = *ip++;
+	int condition = dsp->b;
+	cell_t* jump_to = ip++->cell;
 	if (!condition) {
-		ip = (uintptr_t*) jump_to;
+		ip = jump_to;
 	}
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_jump_and_drop_if_eq_const) {
-	uintptr_t top = *dsp;
-	uintptr_t constant = *ip++;
-	uintptr_t jump_to = *ip++;
+	unsigned top = dsp->u;
+	unsigned constant = ip++->u;
+	cell_t* jump_to = ip++->cell;
 	if (top == constant) {
 		--dsp; // remove known value from stack
-		ip = (uintptr_t*) jump_to;
+		ip = jump_to;
 	}
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_dup_jump_if_eq_const) {
-	uintptr_t top = *dsp;
-	uintptr_t constant = *ip++;
-	uintptr_t jump_to = *ip++;
+	unsigned top = dsp->u;
+	unsigned constant = ip++->u;
+	cell_t* jump_to = ip++->cell;
 	if (top == constant) {
-		ip = (uintptr_t*) jump_to;
+		ip = jump_to;
 	}
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_dup_jump_if_le_const) {
-	uintptr_t top = *dsp;
-	uintptr_t constant = *ip++;
-	uintptr_t jump_to = *ip++;
+	unsigned top = dsp->u;
+	unsigned constant = ip++->u;
+	cell_t* jump_to = ip++->cell;
 	if (top <= constant) {
-		ip = (uintptr_t*) jump_to;
+		ip = jump_to;
 	}
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_jump_if_notzero) {
-	uintptr_t condition = *dsp--;
-	uintptr_t* jump_to = (uintptr_t*) *ip++;
+	unsigned condition = dsp->u;
+	--dsp;
+	cell_t* jump_to = ip++->cell;
 	if (condition) {
 		ip = jump_to;
 	}
 } CMD_END
 
 #if IP_DSP_REGISTERS
-void svm_push_ret(uintptr_t* ip, uintptr_t* _dsp) {
-	uintptr_t value = (uintptr_t) *ip++;
-	* ++_dsp = (uintptr_t)value;
+void svm_push_ret(cell_t* ip, cell_t* _dsp) {
+	* ++_dsp = *ip++;
 	dsp = _dsp; // set global variable from register
 }
 #elif DIRECT_THREADED_CODE
 void svm_push_ret(void) {
-	uintptr_t value = (uintptr_t) *ip++;
-	* ++dsp = (uintptr_t)value;
+	* ++dsp = *ip++;
 }
 #else
 CMD_IMPLEMENTATION(svm_push_ret) {
-	uintptr_t value = (uintptr_t) *ip++;
-	* ++dsp = (uintptr_t)value;
-	ip = (uintptr_t*) *rsp--;
+	* ++dsp = *ip++;
+	ip = rsp->cell;
+	--rsp;
 } CMD_END
 #endif
 
 #if IP_DSP_REGISTERS
-void svm_exit(uintptr_t* ip, uintptr_t* _dsp) {
+void svm_exit(cell_t* ip, cell_t* _dsp) {
 	dsp = _dsp; // set global variable from register
 }
 
-void svm_ret(uintptr_t* ip, uintptr_t* _dsp) {
+void svm_ret(cell_t* ip, cell_t* _dsp) {
 	dsp = _dsp; // set global variable from register
 }
 #elif DIRECT_THREADED_CODE
@@ -223,15 +224,15 @@ CMD_IMPLEMENTATION(svm_exit) {
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_ret) {
-	ip = (uintptr_t*) *rsp--;
+	ip = rsp->cell;
+	--rsp;
 } CMD_END
 #endif
 
 CMD_IMPLEMENTATION(svm_drop_push) {
-	uintptr_t value = *ip++;
-	*dsp = (uintptr_t)value;
+	*dsp = *ip++;
 } CMD_END
 
 CMD_IMPLEMENTATION(svm_drop_push0) {
-	*dsp = 0;
+	dsp->fullcell = 0;
 } CMD_END

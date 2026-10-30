@@ -443,7 +443,7 @@ int main(int argc, char** argv) {
 	}
 
 	// Run interpreter
-	uintptr_t *orig_dsp = dsp;
+	cell_t *orig_dsp = dsp;
 	int i;
 	for (i = 0; i < count; ++i) {
 		ip = tc;

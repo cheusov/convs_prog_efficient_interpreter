@@ -27,10 +27,13 @@
 
 #pragma once
 
+union _cell_t;
+
+#define STATIC_ASSERT(NUM, COND) extern char __array__ ## NUM[((COND) != 0) - 1]
 
 #if DIRECT_THREADED_CODE
 # if IP_DSP_REGISTERS
-#  define TAKE_ARGS uintptr_t* ip, uintptr_t* dsp
+#  define TAKE_ARGS union _cell_t* ip, union _cell_t* dsp
 #  define PASS_ARGS ip, dsp
 # else
 #  define TAKE_ARGS void
@@ -40,7 +43,7 @@
 typedef void(*command_t)(TAKE_ARGS);
 # define CMD_DECL(name) void name(TAKE_ARGS);
 # define CMD_IMPLEMENTATION(name) void name(TAKE_ARGS) {
-# define CMD_END command_t next = (command_t) *ip++; next(PASS_ARGS); }
+# define CMD_END command_t next = (command_t) ip++->cmd; next(PASS_ARGS); }
 
 #else
 
@@ -51,3 +54,17 @@ typedef void(*command_t)(void);
 # define CMD_IMPLEMENTATION(name) void name(void)
 # define CMD_END
 #endif
+
+typedef uintptr_t fullcell_t;
+
+typedef union _cell_t {
+	void *ptr;
+	union _cell_t* cell;
+	command_t cmd;
+	fullcell_t fullcell;
+	unsigned u;
+	int i;
+	int b; /* condition should be here */
+} cell_t;
+
+STATIC_ASSERT(0, sizeof(fullcell_t) == sizeof(cell_t));

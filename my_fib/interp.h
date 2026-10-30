@@ -27,12 +27,14 @@
 
 #include <stdint.h>
 
-extern uintptr_t* ip; // instruction pointer
+#include "defs.h"
 
-extern uintptr_t* dsp; // data stack pointer
+extern cell_t* ip; // instruction pointer
+
+extern cell_t* dsp; // data stack pointer
 
 #if !DIRECT_THREADED_CODE
-extern uintptr_t* rsp; // return stack pointer
+extern cell_t* rsp; // return stack pointer
 #endif
 
 void interp_init(void);
