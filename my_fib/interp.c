@@ -38,9 +38,9 @@
 #define DATA_STACK_SIZE 1000
 #define RETURN_STACK_SIZE 1000
 
-static int page_size = 0;
-
 int get_page_size(void) {
+	static int page_size = 0;
+
 	if (page_size == 0) {
 		page_size = sysconf(_SC_PAGE_SIZE);
 		if (page_size == -1) {
