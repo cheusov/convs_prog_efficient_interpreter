@@ -81,6 +81,11 @@ CMD_IMPLEMENTATION(rvm_println_uint) {
 	printf("%u\n", dsp[arg_reg].u);
 } CMD_END
 
+CMD_IMPLEMENTATION(rvm_println_float) {
+	int arg_reg = ip++->i;
+	printf("%f\n", dsp[arg_reg].f);
+} CMD_END
+
 CMD_IMPLEMENTATION(rvm_set) {
 	int result_reg = ip++->i;
 	fullcell_t value = ip++->fullcell;
@@ -93,9 +98,20 @@ CMD_IMPLEMENTATION(rvm_udec) {
 	dsp[result_reg].u = dsp[arg_reg].u - 1;
 } CMD_END
 
+CMD_IMPLEMENTATION(rvm_fdec) {
+	int result_reg = ip++->i;
+	int arg_reg = ip++->i;
+	dsp[result_reg].f = dsp[arg_reg].f - 1.0;
+} CMD_END
+
 CMD_IMPLEMENTATION(rvm_udec1) {
 	int result_reg = ip++->i;
 	--dsp[result_reg].u;
+} CMD_END
+
+CMD_IMPLEMENTATION(rvm_fdec1) {
+	int result_reg = ip++->i;
+	--dsp[result_reg].f;
 } CMD_END
 
 CMD_IMPLEMENTATION(rvm_uadd) {
@@ -105,10 +121,23 @@ CMD_IMPLEMENTATION(rvm_uadd) {
 	dsp[result_reg].u = dsp[a_reg].u + dsp[b_reg].u;
 } CMD_END
 
+CMD_IMPLEMENTATION(rvm_fadd) {
+	int result_reg = ip++->i;
+	int a_reg = ip++->i;
+	int b_reg = ip++->i;
+	dsp[result_reg].f = dsp[a_reg].f + dsp[b_reg].f;
+} CMD_END
+
 CMD_IMPLEMENTATION(rvm_uadd1) {
 	int result_reg = ip++->i;
 	int value_reg = ip++->i;
 	dsp[result_reg].u += dsp[value_reg].u;
+} CMD_END
+
+CMD_IMPLEMENTATION(rvm_fadd1) {
+	int result_reg = ip++->i;
+	int value_reg = ip++->i;
+	dsp[result_reg].f += dsp[value_reg].f;
 } CMD_END
 
 #if DIRECT_THREADED_CODE
@@ -129,6 +158,14 @@ CMD_IMPLEMENTATION(rvm_jump_if_uzero) {
 	}
 } CMD_END
 
+CMD_IMPLEMENTATION(rvm_jump_if_fzero) {
+	int arg_reg = ip++->i;
+	cell_t* jump_to = ip++->cell;
+	if (!dsp[arg_reg].f) {
+		ip = jump_to;
+	}
+} CMD_END
+
 CMD_IMPLEMENTATION(rvm_jump_if_eq_uconst) {
 	int arg_reg = ip++->i;
 	unsigned value = ip++->u;
@@ -138,11 +175,29 @@ CMD_IMPLEMENTATION(rvm_jump_if_eq_uconst) {
 	}
 } CMD_END
 
+CMD_IMPLEMENTATION(rvm_jump_if_eq_fconst) {
+	int arg_reg = ip++->i;
+	float value = ip++->f;
+	cell_t* jump_to = ip++->cell;
+	if (dsp[arg_reg].f == value) {
+		ip = jump_to;
+	}
+} CMD_END
+
 CMD_IMPLEMENTATION(rvm_jump_if_le_uconst) {
 	int arg_reg = ip++->i;
 	unsigned value = ip++->u;
 	cell_t* jump_to = ip++->cell;
 	if (dsp[arg_reg].u <= value) {
+		ip = jump_to;
+	}
+} CMD_END
+
+CMD_IMPLEMENTATION(rvm_jump_if_le_fconst) {
+	int arg_reg = ip++->i;
+	float value = ip++->f;
+	cell_t* jump_to = ip++->cell;
+	if (dsp[arg_reg].f <= value) {
 		ip = jump_to;
 	}
 } CMD_END

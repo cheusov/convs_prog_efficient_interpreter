@@ -64,6 +64,7 @@ typedef union _cell_t {
 	fullcell_t fullcell;
 	unsigned u;
 	int i;
+	float f;
 } cell_t;
 
 STATIC_ASSERT(0, sizeof(fullcell_t) == sizeof(cell_t));
