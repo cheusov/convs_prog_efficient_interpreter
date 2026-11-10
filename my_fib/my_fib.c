@@ -55,23 +55,23 @@ static void fibonacci_svm_v1(unsigned n) {
 	// n, n
 	SVM_PUSH(1);
 	// n, n, 1
-	SVM_EQ;
+	SVM_UEQ;
 	// n, n == 1
-	SVM_JUMP_IF_NOTZERO("return 1");
+	SVM_JUMP_IF_UNOTZERO("return 1");
 	// n
 	SVM_DUP;
 	// n, n
 	SVM_PUSH(0);
 	// n, n, 0
-	SVM_EQ;
+	SVM_UEQ;
 	// n, n == 0
-	SVM_JUMP_IF_NOTZERO("return 0");
+	SVM_JUMP_IF_UNOTZERO("return 0");
 	// n
-	SVM_DEC;
+	SVM_UDEC;
 	// n - 1
 	SVM_DUP;
 	// n - 1, n - 1
-	SVM_DEC;
+	SVM_UDEC;
 	// n - 1, n - 2
 	SVM_CALL("Fibonacci");
 	// n - 1, Fib(n - 2)
@@ -117,15 +117,15 @@ static void fibonacci_svm_v2(unsigned n) {
 	______Function______("Fibonacci");
 
 	// n
-	SVM_JUMP_AND_DROP_IF_EQ_CONST(1, "return 1");
+	SVM_JUMP_AND_DROP_IF_EQ_UCONST(1, "return 1");
 	// n
-	SVM_JUMP_AND_DROP_IF_ZERO("return 0");
+	SVM_JUMP_AND_DROP_IF_UZERO("return 0");
 	// n
-	SVM_DEC;
+	SVM_UDEC;
 	// n - 1
 	SVM_DUP;
 	// n - 1, n - 1
-	SVM_DEC;
+	SVM_UDEC;
 	// n - 1, n - 2
 	SVM_CALL("Fibonacci");
 	// n - 1, Fib(n - 2)
@@ -159,15 +159,15 @@ static void fibonacci_svm_v3(unsigned n) {
 	______Function______("Fibonacci");
 
 	// n
-	SVM_DUP_JUMP_IF_EQ_CONST(1, "return n");
+	SVM_DUP_JUMP_IF_EQ_UCONST(1, "return n");
 	// n
-	SVM_DUP_JUMP_IF_ZERO("return n");
+	SVM_DUP_JUMP_IF_UZERO("return n");
 	// n
-	SVM_DEC;
+	SVM_UDEC;
 	// n - 1
 	SVM_DUP;
 	// n - 1, n - 1
-	SVM_DEC;
+	SVM_UDEC;
 	// n - 1, n - 2
 	SVM_CALL("Fibonacci");
 	// n - 1, Fib(n - 2)
@@ -197,13 +197,13 @@ static void fibonacci_svm_v4(unsigned n) {
 	______Function______("Fibonacci");
 
 	// n
-	SVM_DUP_JUMP_IF_LE_CONST(1, "return n");
+	SVM_DUP_JUMP_IF_LE_UCONST(1, "return n");
 	// n
-	SVM_DEC;
+	SVM_UDEC;
 	// n - 1
 	SVM_DUP;
 	// n - 1, n - 1
-	SVM_DEC;
+	SVM_UDEC;
 	// n - 1, n - 2
 	SVM_CALL("Fibonacci");
 	// n - 1, Fib(n - 2)
@@ -232,13 +232,13 @@ static void fibonacci_rvm_v1(unsigned n, unsigned global_var_count) {
 
 	______Function______("Fibonacci");
 	RVM_FRAMESIZE(4); // frame size
-	RVM_JUMP_IF_ZERO(2, "return n");
-	RVM_JUMP_IF_EQ_CONST(2, 1, "return n");
-	RVM_DEC(2, 2);
-	RVM_DEC(3, 2);
+	RVM_JUMP_IF_UZERO(2, "return n");
+	RVM_JUMP_IF_EQ_UCONST(2, 1, "return n");
+	RVM_UDEC(2, 2);
+	RVM_UDEC(3, 2);
 	RVM_CALL1(2, 2, "Fibonacci");
 	RVM_CALL1(3, 3, "Fibonacci");
-	RVM_ADD(2, 3, 2);
+	RVM_UADD(2, 3, 2);
 
 	______("return n");
 	RVM_RET(2);
@@ -256,13 +256,13 @@ static void fibonacci_rvm_v2(unsigned n, unsigned global_var_count) {
 
 	______Function______("Fibonacci");
 	RVM_FRAMESIZE(4); // frame size
-	RVM_JUMP_IF_ZERO(2, "return n");
-	RVM_JUMP_IF_EQ_CONST(2, 1, "return n");
-	RVM_DEC1(2);
-	RVM_DEC(3, 2);
+	RVM_JUMP_IF_UZERO(2, "return n");
+	RVM_JUMP_IF_EQ_UCONST(2, 1, "return n");
+	RVM_UDEC1(2);
+	RVM_UDEC(3, 2);
 	RVM_CALL1(2, 2, "Fibonacci");
 	RVM_CALL1(3, 3, "Fibonacci");
-	RVM_ADD1(2, 3);
+	RVM_UADD1(2, 3);
 
 	______("return n");
 	RVM_RET(2);
@@ -280,12 +280,12 @@ static void fibonacci_rvm_v3(unsigned n, unsigned global_var_count) {
 
 	______Function______("Fibonacci");
 	RVM_FRAMESIZE(4); // frame size
-	RVM_JUMP_IF_LE_CONST(2, 1, "return n");
-	RVM_DEC1(2);
-	RVM_DEC(3, 2);
+	RVM_JUMP_IF_LE_UCONST(2, 1, "return n");
+	RVM_UDEC1(2);
+	RVM_UDEC(3, 2);
 	RVM_CALL1(2, 2, "Fibonacci");
 	RVM_CALL1(3, 3, "Fibonacci");
-	RVM_ADD1(2, 3);
+	RVM_UADD1(2, 3);
 
 	______("return n");
 	RVM_RET(2);
@@ -304,7 +304,7 @@ static void test_threaded_code(void) {
 	// n | Fib(n)
 	______Function______("MyDup");
 	SVM_DUP;
-	SVM_DEC;
+	SVM_UDEC;
 	SVM_RET;
 
 	tc_resolve();
